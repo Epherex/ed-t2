@@ -43,7 +43,7 @@ StList StList_Create(int size) {
 
 void StList_Resize(StList staticListVoid, int size) {
     StListPtr list = (StListPtr) staticListVoid;
-    if(size < list->size)
+    if(size <= list->size)
         return;
     Node nodes = realloc(list->nodes, size * sizeof(struct node_t));
     if(nodes == NULL)
@@ -67,16 +67,30 @@ void StList_Destroy(StList staticListVoid, void destroyElement(void*)) {
     free(list);
 }
 
-int _freeStackPop(StListPtr list) {
+static int _freeStackPop(StListPtr list) {
     int freeIndex = list->freeIndex;
     if(freeIndex != NULLC)
         list->freeIndex = list->nodes[freeIndex].next;
     return freeIndex;
 }
 
-void _freeStackPush(StListPtr list, int index) {
+static void _freeStackPush(StListPtr list, int index) {
     list->nodes[index].next = list->freeIndex;
     list->freeIndex = index;
+}
+
+static void _removeElement(StListPtr list, int index) {
+    int previous = list->nodes[index].previous;
+    int next = list->nodes[index].next;
+    if(previous != NULLC)
+        list->nodes[previous].next = next;
+    else
+        list->first = list->nodes[index].next;
+    if(next != NULLC)
+        list->nodes[next].previous = previous;
+    else
+        list->last = previous;
+    _freeStackPush(list, index);
 }
 
 bool StList_Add(StList staticListVoid, void *element) {
@@ -99,22 +113,23 @@ bool StList_Add(StList staticListVoid, void *element) {
     return true;
 }
 
+void StList_ExecAndDestroy(StList staticListVoid, void f(void*, void*), void *parameter, bool compFunc(void*, void*), void *comparingField, void destroyElement(void*)) {
+    StListPtr list = (StListPtr) staticListVoid;
+    for(int i = list->first; i != NULLC; i = list->nodes[i].next) {
+        if(compFunc(list->nodes[i].val, comparingField)) {
+            f(list->nodes[i].val, parameter);
+            _removeElement(list, i);
+            destroyElement(list->nodes[i].val);
+        }
+    }
+}
+
 void *StList_Remove(StList staticListVoid, bool compFunc(void*, void*), void *comparingField) {
     StListPtr list = (StListPtr) staticListVoid;
     for(int i = list->first; i != NULLC; i = list->nodes[i].next) {
         if(compFunc(list->nodes[i].val, comparingField)) {
-            int previous = list->nodes[i].previous;
-            int next = list->nodes[i].next;
-            if(previous != NULLC)
-                list->nodes[previous].next = next;
-            else
-                list->first = list->nodes[i].next;
-            if(next != NULLC)
-                list->nodes[next].previous = previous;
-            else
-                list->last = previous;
             void *removedElement = list->nodes[i].val;
-            _freeStackPush(list, i);
+            _removeElement(list, i);
             return removedElement;
         }
     }
@@ -135,6 +150,13 @@ void *StList_RemoveLast(StList staticListVoid) {
     list->last = previous;
     _freeStackPush(list, last);
     return removedElement;
+}
+
+void *StList_RemoveAt(StList staticListVoid, int pos) {
+    StListPtr list = (StListPtr) staticListVoid;
+    if(StList_IsEmpty(list))
+        return NULL;
+    _removeElement(list, pos);
 }
 
 bool StList_IsEmpty(StList staticListVoid) {
@@ -162,6 +184,24 @@ void *StList_Find(StList staticListVoid, bool compFunc(void*, void*), void *comp
             return list->nodes[i].val;
     }
     return NULL;
+}
+
+int StList_FindPos(StList staticListVoid, bool compFunc(void*, void*), void *comparingField) {
+    StListPtr list = (StListPtr) staticListVoid;
+    for(int i = list->first; i != NULLC; i = list->nodes[i].next) {
+        if(compFunc(list->nodes[i].val, comparingField))
+            return i;
+    }
+    return NULLC;
+}
+
+void *StList_Get(StList staticListVoid, int pos) {
+    StListPtr list = (StListPtr) staticListVoid;
+    if(pos < 0 || pos >= list->size) {
+        return NULL;
+    } else {
+        return list->nodes[pos].val;
+    }
 }
 
 void StList_Execute(StList staticListVoid, void f(void*, void*), void *parameter) {

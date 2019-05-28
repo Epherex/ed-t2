@@ -5,17 +5,17 @@ typedef struct object_t {
     ObjectType type;
     char color1[24], color2[24];
     char id[8];
-    int stroke;
+    char stroke[16];
 } *ObjectPtr;
 
-Object Object_Create(char id[], void *content, int type, char color1[], char color2[], int stroke) {
+Object Object_Create(char id[], void *content, int type, char color1[], char color2[], char stroke[]) {
     ObjectPtr newObj = malloc(sizeof(struct object_t));
     newObj->content = content;
     newObj->type = type;
     strcpy(newObj->id, id);
     strcpy(newObj->color1, color1);
     strcpy(newObj->color2, color2);
-    newObj->stroke = stroke;
+    strcpy(newObj->stroke, stroke);
     return newObj;
 }
 
@@ -39,7 +39,7 @@ char *Object_GetColor2(Object objectVoid) {
     return object->color2;
 }
 
-int Object_GetStroke(Object objectVoid) {
+char *Object_GetStroke(Object objectVoid) {
     ObjectPtr object = (ObjectPtr) objectVoid;
     return object->stroke;
 }

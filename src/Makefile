@@ -2,7 +2,7 @@ CC = gcc
 COMPILER_FLAGS = -std=c99 -fstack-protector-all
 LINKER_FLAGS = -lm
 EXEC_NAME = siguel
-OBJECTS = main.o geometry.o object.o circle.o rectangle.o file_util.o static_list.o svg.o commands.o
+OBJECTS = main.o geometry.o object.o circle.o rectangle.o block.o equipment.o file_util.o static_list.o svg.o commands.o query.o
 
 all: $(EXEC_NAME)
 
@@ -24,6 +24,12 @@ circle.o: modules/sig/circle.c modules/sig/circle.h
 rectangle.o: modules/sig/rectangle.c modules/sig/rectangle.h
 	$(CC) -c modules/sig/rectangle.c $(COMPILER_FLAGS)
 
+block.o: modules/sig/block.c modules/sig/block.h
+	$(CC) -c modules/sig/block.c $(COMPILER_FLAGS)
+
+equipment.o: modules/sig/equipment.c modules/sig/equipment.h
+	$(CC) -c modules/sig/equipment.c $(COMPILER_FLAGS)
+
 file_util.o: file_util.c file_util.h
 	$(CC) -c file_util.c $(COMPILER_FLAGS)
 
@@ -35,6 +41,9 @@ svg.o: modules/sig/svg.c modules/sig/svg.h modules/sig/object.h modules/sig/circ
 
 commands.o: commands.c commands.h file_util.h modules/data_structures/static_list.h modules/sig/svg.h modules/sig/geometry.h modules/sig/object.h
 	$(CC) -c commands.c $(COMPILER_FLAGS)
+
+query.o: query.c query.h modules/data_structures/static_list.h modules/sig/svg.h modules/sig/geometry.h modules/sig/object.h
+	$(CC) -c query.c $(COMPILER_FLAGS)
 
 clean:
 	rm -rf *.o

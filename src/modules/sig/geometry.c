@@ -4,6 +4,10 @@ double euclideanDistance(double x1, double y1, double x2, double y2) {
     return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
 }
 
+double manhattanDistance(double x1, double y1, double x2, double y2) {
+    return abs(x1 - x2) + abs(y1 - y2);
+}
+
 double clamp(double value, double a, double b) {
 	double clamped = value > b ? b : value;
 	clamped = value < a ? a : clamped;

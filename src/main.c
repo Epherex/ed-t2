@@ -8,7 +8,6 @@
 #include "modules/data_structures/static_list.h"
 
 int main(int argc, char *argv[]) {
-	StList objList = StList_Create(1000);
 
 	char *baseDir = NULL;
 	char *entryFileName = NULL;
@@ -131,13 +130,16 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Processar comandos do .geo
-	if(!processGeometry(entryFile, outputSVGFile, outputQrySVGFile, objList))
+	/*if(!processGeometry(entryFile, outputSVGFile, outputQrySVGFile, objList))
 		return 1;
 
 	// Processar comandos do .qry, se houver
 	if(queryFile != NULL)
 		if(!processQuery(queryFile, outputQrySVGFile, outputTXTFile, objList, outputDir, outputQrySVGFileName))
-			return 1;
+			return 1;*/
+
+	processAll(entryFile, outputSVGFile, outputQrySVGFile, queryFile, outputTXTFile, outputDir, outputQrySVGFileName);
+
 	
 	// Limpeza
 	fclose(entryFile);
@@ -154,5 +156,5 @@ int main(int argc, char *argv[]) {
 	free(entryFileName);
 	if(outputDir != NULL)
 		free(outputDir);
-	StList_Destroy(objList, Object_Destroy);
+	//StList_Destroy(objList, Object_Destroy);
 }

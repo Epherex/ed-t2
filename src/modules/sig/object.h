@@ -8,12 +8,13 @@
 
 typedef enum ObjectType {
     OBJ_CIRC,
-    OBJ_RECT
+    OBJ_RECT,
+    OBJ_TEXT
 } ObjectType;
 
 typedef void *Object;
 
-Object Object_Create(char id[], void *content, int type, char color1[], char color2[], int stroke);
+Object Object_Create(char id[], void *content, int type, char color1[], char color2[], char stroke[]);
 
 void *Object_GetContent(Object object);
 
@@ -23,7 +24,7 @@ char *Object_GetColor1(Object object);
 
 char *Object_GetColor2(Object object);
 
-int Object_GetStroke(Object object);
+char *Object_GetStroke(Object object);
 
 char *Object_GetId(Object object);
 

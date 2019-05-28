@@ -9,6 +9,8 @@
 
 double euclideanDistance(double x1, double y1, double x2, double y2);
 
+double manhattanDistance(double x1, double y1, double x2, double y2);
+
 double clamp(double value, double a, double b);
 
 bool checkOverlap(Object a, Object b);
