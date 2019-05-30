@@ -7,39 +7,9 @@ typedef struct BBParameters {
     char *color;
 } BBParameters;
 
-typedef struct Lists {
-    StList objList;
-    StList blockList;
-    StList hydList;
-    StList cTowerList;
-    StList tLightList;
-} Lists;
+bool processGeometry(FILE *entryFile);
 
-bool processQuery(FILE *queryFile, FILE *outputFile, FILE *txtFile, Lists *lists, char outputDir[], char svgFileName[]);
-
-void initializeLists(Lists *lists, int nx, int nb, int nh, int nc, int nt) {
-    lists->objList = StList_Create(nx);
-    lists->blockList = StList_Create(nb);
-    lists->hydList = StList_Create(nh);
-    lists->cTowerList = StList_Create(nc);
-    lists->tLightList = StList_Create(nt);
-}
-
-void resizeLists(Lists *lists, int nx, int nb, int nh, int nc, int nt) {
-    StList_Resize(lists->objList, nx);
-    StList_Resize(lists->blockList, nb);
-    StList_Resize(lists->hydList, nh);
-    StList_Resize(lists->cTowerList, nc);
-    StList_Resize(lists->tLightList, nt);
-}
-
-void destroyLists(Lists *lists) {
-    StList_Destroy(lists->objList, Object_Destroy);
-    StList_Destroy(lists->blockList, Block_Destroy);
-    StList_Destroy(lists->hydList, Equip_Destroy);
-    StList_Destroy(lists->cTowerList, Equip_Destroy);
-    StList_Destroy(lists->tLightList, Equip_Destroy);
-}
+bool processQuery(FILE *queryFile, FILE *outputFile, FILE *txtFile, char outputDir[], char svgFileName[]);
 
 void writeObject(Object o, void *param) {
     FILE *svgFile = (FILE *) param;
@@ -52,43 +22,40 @@ void writeObject(Object o, void *param) {
     }
 }
 
-void writeSVG(FILE *outputSVGFile, Lists *lists, bool svgTag) {
+void writeSVG(FILE *outputSVGFile, bool svgTag) {
     if(svgTag)
         putSVGStart(outputSVGFile);
-    StList_Execute(lists->objList, writeObject, outputSVGFile);
-    StList_Execute(lists->blockList, putSVGBlock, outputSVGFile);
-    StList_Execute(lists->hydList, putSVGHydrant, outputSVGFile);
-    StList_Execute(lists->tLightList, putSVGTrafficLight, outputSVGFile);
-    StList_Execute(lists->cTowerList, putSVGCellTower, outputSVGFile);
+    StList_Execute(getObjList(), writeObject, outputSVGFile);
+    StList_Execute(getBlockList(), putSVGBlock, outputSVGFile);
+    StList_Execute(getHydList(), putSVGHydrant, outputSVGFile);
+    StList_Execute(getTLightList(), putSVGTrafficLight, outputSVGFile);
+    StList_Execute(getCTowerList(), putSVGCellTower, outputSVGFile);
     if(svgTag)
         putSVGEnd(outputSVGFile);
 }
 
-bool processGeometry(FILE *entryFile, Lists *lists);
-
 void processAll(FILE *entryFile, FILE *outputSVGFile, FILE *outputQryFile, FILE *queryFile, FILE *txtFile, char outputDir[], char svgFileName[]) {
-    Lists lists = {NULL, NULL, NULL, NULL, NULL};
+    initializeLists();
     
-    processGeometry(entryFile, &lists);
-    writeSVG(outputSVGFile, &lists, true);
+    processGeometry(entryFile);
+    writeSVG(outputSVGFile, true);
     
     if(queryFile != NULL) {
-        processQuery(queryFile, outputQryFile, txtFile, &lists, outputDir, svgFileName);
-        writeSVG(outputQryFile, &lists, false);
+        putSVGStart(outputQryFile);
+        processQuery(queryFile, outputQryFile, txtFile, outputDir, svgFileName);
+        writeSVG(outputQryFile, false);
         putSVGEnd(outputQryFile);
     }
 
-    destroyLists(&lists);
+    destroyLists();
 }
 
-bool processGeometry(FILE *entryFile, Lists *lists) {
+bool processGeometry(FILE *entryFile) {
     int nx = DEFAULT_MAXIMUM;
     int nb = DEFAULT_MAXIMUM;
     int nh = DEFAULT_MAXIMUM;
     int nc = DEFAULT_MAXIMUM;
     int nt = DEFAULT_MAXIMUM;
-
-    initializeLists(lists, nx, nb, nh, nc, nt);
 
     char cFillBlock[24];
     char cStrkBlock[24];
@@ -123,7 +90,7 @@ bool processGeometry(FILE *entryFile, Lists *lists) {
                 nh = nh1;
                 nc = nc1;
                 nt = nt1;
-                resizeLists(lists, nx, nb, nh, nc, nt);
+                resizeLists(nx, nb, nh, nc, nt);
             }
         } else if(strcmp(type, "c") == 0) {
             char id[8];
@@ -134,10 +101,11 @@ bool processGeometry(FILE *entryFile, Lists *lists) {
             Circle c = Circle_Create(radius, x, y);
             Object o = Object_Create(id, c, OBJ_CIRC, color1, color2, wStrkCircle);
 
-            if(StList_Add(lists->objList, o) == false) {
+            if(StList_Add(getObjList(), o) == false) {
                 #ifdef __DEBUG__
                 printf("Erro: Número máximo de elementos ultrapassado!\n");
                 #endif
+                Object_Destroy(o);
             }
         } else if(strcmp(type, "r") == 0) {
             char id[8];
@@ -148,10 +116,11 @@ bool processGeometry(FILE *entryFile, Lists *lists) {
             Rectangle r = Rectangle_Create(width, height, x, y);
             Object o = Object_Create(id, r, OBJ_RECT, color1, color2, wStrkRectangle);
 
-            if(StList_Add(lists->objList, o) == false) {
+            if(StList_Add(getObjList(), o) == false) {
                 #ifdef __DEBUG__
                 printf("Erro: Número máximo de elementos ultrapassado!\n");
                 #endif
+                Object_Destroy(o);
             }
         } else if(strcmp(type, "t") == 0) {
             char x[24], y[24];
@@ -160,10 +129,11 @@ bool processGeometry(FILE *entryFile, Lists *lists) {
 
             Object o = Object_Create("text", text, OBJ_TEXT, x, y, "");
 
-            if(StList_Add(lists->objList, o) == false) {
+            if(StList_Add(getObjList(), o) == false) {
                 #ifdef __DEBUG__
                 printf("Erro: Número máximo de elementos ultrapassado!\n");
                 #endif
+                Object_Destroy(o);
             }
         } else if(strcmp(type, "cq") == 0) {
             sscanf(buffer + 3, "%23s %23s %15s", cFillBlock, cStrkBlock, wStrkBlock);
@@ -180,10 +150,11 @@ bool processGeometry(FILE *entryFile, Lists *lists) {
 
             Block block = Block_Create(cep, x, y, w, h, cFillBlock, cStrkBlock, wStrkBlock);
             
-            if(StList_Add(lists->blockList, block) == false) {
+            if(StList_Add(getBlockList(), block) == false) {
                 #ifdef __DEBUG__
                 printf("Erro: Número máximo de elementos ultrapassado!\n");
                 #endif
+                Block_Destroy(block);
             }
         } else if(strcmp(type, "h") == 0) {
             char id[16];
@@ -192,10 +163,11 @@ bool processGeometry(FILE *entryFile, Lists *lists) {
             
             Equip hydrant = Equip_Create(id, x, y, cFillHydrant, cStrkHydrant, wStrkHydrant);
             
-            if(StList_Add(lists->hydList, hydrant) == false) {
+            if(StList_Add(getHydList(), hydrant) == false) {
                 #ifdef __DEBUG__
                 printf("Erro: Número máximo de elementos ultrapassado!\n");
                 #endif
+                Equip_Destroy(hydrant);
             }
         } else if(strcmp(type, "s") == 0) {
             char id[16];
@@ -204,10 +176,11 @@ bool processGeometry(FILE *entryFile, Lists *lists) {
             
             Equip trLight = Equip_Create(id, x, y, cFillTrafficLight, cStrkTrafficLight, wStrkTrafficLight);
             
-            if(StList_Add(lists->tLightList, trLight) == false) {
+            if(StList_Add(getTLightList(), trLight) == false) {
                 #ifdef __DEBUG__
                 printf("Erro: Número máximo de elementos ultrapassado!\n");
                 #endif
+                Equip_Destroy(trLight);
             }
         } else if(strcmp(type, "rb") == 0) {
             char id[16];
@@ -216,10 +189,11 @@ bool processGeometry(FILE *entryFile, Lists *lists) {
             
             Equip cellTower = Equip_Create(id, x, y, cFillCellTower, cStrkCellTower, wStrkCellTower);
             
-            if(StList_Add(lists->cTowerList, cellTower) == false) {
+            if(StList_Add(getCTowerList(), cellTower) == false) {
                 #ifdef __DEBUG__
                 printf("Erro: Número máximo de elementos ultrapassado!\n");
                 #endif
+                Equip_Destroy(cellTower);
             }
         }
     }
@@ -239,6 +213,7 @@ void insertBoundingBoxElement(void *o, void *parametersVoid) {
         Rectangle_Destroy(surroundingRect);
     } else if(Object_GetType(o) == OBJ_RECT) {
         putSVGRectangle(file, Object_GetContent(o), Object_GetColor1(o), Object_GetColor2(o), Object_GetStroke(o));
+        
         Rectangle rect = Object_GetContent(o);
         double cx, cy;
         getCenter(o, &cx, &cy);
@@ -252,22 +227,24 @@ bool compareObjectToId(void *obj, void *idVoid) {
     return (strcmp(Object_GetId(obj), id) == 0);
 }
 
-bool processQuery(FILE *queryFile, FILE *outputFile, FILE *txtFile, Lists *lists, char outputDir[], char svgFileName[]) {
-    putSVGStart(outputFile);
+bool processQuery(FILE *queryFile, FILE *outputFile, FILE *txtFile, char outputDir[], char svgFileName[]) {
     char buffer[128];
     while(fgets(buffer, 128, queryFile) != NULL) {
+
         int len = strlen(buffer);
         if(buffer[len - 1] != '\n') {
             buffer[len] = '\n';
             buffer[len + 1] = '\0';
         }
+
         char type[16];
         sscanf(buffer, "%15s", type);
         if(strcmp(type, "o?") == 0) {
+
             char idA[8], idB[8];
             sscanf(buffer + 3, "%7s %7s", idA, idB);
-            Object a = StList_Find(lists->objList, compareObjectToId, idA);
-            Object b = StList_Find(lists->objList, compareObjectToId, idB);
+            Object a = StList_Find(getObjList(), compareObjectToId, idA);
+            Object b = StList_Find(getObjList(), compareObjectToId, idB);
             if(a == NULL || b == NULL) {
                 printf("Erro: Elemento não encontrado!\n");
                 return false;
@@ -292,13 +269,15 @@ bool processQuery(FILE *queryFile, FILE *outputFile, FILE *txtFile, Lists *lists
             putSVGBox(outputFile, minX, minY, maxX - minX, maxY - minY, !overlaps);
             Rectangle_Destroy(rectA);
             Rectangle_Destroy(rectB);
+
         } else if(strcmp(type, "i?") == 0) {
+            
             char id[8];
             double x, y;
             sscanf(buffer + 3, "%7s %lf %lf", id, &x, &y);
-            Object o = StList_Find(lists->objList, compareObjectToId, id);
+            Object o = StList_Find(getObjList(), compareObjectToId, id);
             if(o == NULL) {
-                printf("Erro: Elemento não encontrado!\n");
+                printf("Erro: Elemento não encontrado: %s!\n", id);
                 return false;
             }
             fputs(buffer, txtFile);
@@ -312,12 +291,14 @@ bool processQuery(FILE *queryFile, FILE *outputFile, FILE *txtFile, Lists *lists
             getCenter(o, &centerX, &centerY);
             putSVGLine(outputFile, centerX, centerY, x, y);
             putSVGPoint(outputFile, x, y, inside);
+
         } else if(strcmp(type, "d?") == 0) {
+
             char j[8], k[8];
             sscanf(buffer + 3, "%7s %7s", j, k);
             double c1x, c1y, c2x, c2y;
-            Object a = StList_Find(lists->objList, compareObjectToId, j);
-            Object b = StList_Find(lists->objList, compareObjectToId, k);
+            Object a = StList_Find(getObjList(), compareObjectToId, j);
+            Object b = StList_Find(getObjList(), compareObjectToId, k);
             if(a == NULL || b == NULL) {
                 printf("Erro: Elemento não encontrado!\n");
                 return false;
@@ -331,11 +312,14 @@ bool processQuery(FILE *queryFile, FILE *outputFile, FILE *txtFile, Lists *lists
             char distText[16];
             sprintf(distText, "%lf", dist);
             putSVGText(outputFile, c1x + (c2x - c1x) / 2, c1y + (c2y - c1y) / 2, distText);
+        
         } else if(strcmp(type, "bb") == 0) {
-            char nameWithSuffix[128];
-            strcpy(nameWithSuffix, svgFileName);
+
             char suffix[32], color[16];
             sscanf(buffer + 3, "%s %s", suffix, color);
+
+            char nameWithSuffix[128];
+            strcpy(nameWithSuffix, svgFileName);
             addSuffix(nameWithSuffix, suffix);
             FILE *bbFile = openFile(outputDir, nameWithSuffix, "w");
             if(bbFile == NULL) {
@@ -343,24 +327,58 @@ bool processQuery(FILE *queryFile, FILE *outputFile, FILE *txtFile, Lists *lists
             }
             putSVGStart(bbFile);
             BBParameters params = {bbFile, color};
-            StList_Execute(lists->objList, insertBoundingBoxElement, &params);
+            StList_Execute(getObjList(), insertBoundingBoxElement, &params);
             putSVGEnd(bbFile);
             fclose(bbFile);
+        
         } else if(strcmp(type, "dq") == 0) {
-            if(!Query_Dq(txtFile, lists->blockList, lists->hydList, lists->cTowerList, lists->tLightList, buffer))
+
+            char metric[8], id[16];
+            double dist;
+            sscanf(buffer + 3, "%7s %15s %lf", metric, id, &dist);
+
+            fputs(buffer, txtFile);
+            if(!Query_Dq(txtFile, metric, id, dist))
                 return false;
+        
         } else if(strcmp(type, "del") == 0) {
-            if(!Query_Del(txtFile, lists->blockList, lists->hydList, lists->cTowerList, lists->tLightList, buffer))
+
+            char id[16];
+            sscanf(buffer + 4, "%15s", id);
+
+            fputs(buffer, txtFile);
+            if(!Query_Del(txtFile, id))
                 return false;
+        
         } else if(strcmp(type, "cbq") == 0) {
-            if(!Query_Cbq(txtFile, lists->blockList, buffer))
+
+            double x, y, r;
+            char cStrk[24];
+            sscanf(buffer + 4, "%lf %lf %lf %23s", &x, &y, &r, cStrk);
+
+            fputs(buffer, txtFile);
+            if(!Query_Cbq(txtFile, x, y, r, cStrk))
                 return false;
+        
         } else if(strcmp(type, "crd?") == 0) {
-            if(!Query_Crd(txtFile, lists->blockList, lists->hydList, lists->cTowerList, lists->tLightList, buffer))
+
+            char id[16];
+            sscanf(buffer + 5, "%15s", id);
+
+            fputs(buffer, txtFile);
+            if(!Query_Crd(txtFile, id))
                 return false;
+
         } else if(strcmp(type, "trns") == 0) {
-            if(!Query_Trns(txtFile, lists->blockList, lists->hydList, lists->cTowerList, lists->tLightList, buffer))
+
+            double x, y, w, h, dx, dy;
+            sscanf(buffer + 5, "%lf %lf %lf %lf %lf %lf", 
+                   &x, &y, &w, &h, &dx, &dy);
+
+            fputs(buffer, txtFile);
+            if(!Query_Trns(txtFile, x, y, w, h, dx, dy))
                 return false;
+
         }
     }
     return true;

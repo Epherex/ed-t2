@@ -2,7 +2,7 @@ CC = gcc
 COMPILER_FLAGS = -std=c99 -fstack-protector-all
 LINKER_FLAGS = -lm
 EXEC_NAME = siguel
-OBJECTS = main.o geometry.o object.o circle.o rectangle.o block.o equipment.o file_util.o static_list.o svg.o commands.o query.o
+OBJECTS = main.o geometry.o object.o circle.o rectangle.o block.o equipment.o file_util.o static_list.o svg.o commands.o query.o lists.o
 
 all: $(EXEC_NAME)
 
@@ -44,6 +44,9 @@ commands.o: commands.c commands.h file_util.h modules/data_structures/static_lis
 
 query.o: query.c query.h modules/data_structures/static_list.h modules/sig/svg.h modules/sig/geometry.h modules/sig/object.h
 	$(CC) -c query.c $(COMPILER_FLAGS)
+
+lists.o: lists.c lists.h modules/data_structures/static_list.h
+	$(CC) -c lists.c $(COMPILER_FLAGS)
 
 clean:
 	rm -rf *.o

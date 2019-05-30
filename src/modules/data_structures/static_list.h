@@ -6,6 +6,8 @@
 
 typedef void *StList;
 
+#define NULLC -1
+
 // Cria uma lista estática
 //     size: tamanho da lista
 // Retorno: lista alocada ou NULL se a criação falhou
@@ -22,16 +24,16 @@ void StList_Destroy(StList staticList, void destroyElement(void*));
 //     staticList: ponteiro para a lista estática
 //     element: elemento a ser adicionado
 bool StList_Add(StList staticList, void *element);
-// Executa a função f, mandando de parâmetros o elemento e 'parameter', destrói e remove da lista
-// todos os elementos que satisfizerem a condição da função compFunc, que recebe o elemento e 'comparingField'.
+// Adiciona um elemento a uma lista estática após uma posição fornecida de um elemento
 //     staticList: ponteiro para a lista estática
-//     f: função que será executada em cada elemento
-//     parameter: parâmetro extra que será passado para a função
-//     compFunc: função que aceita um elemento da lista, um parametro e retorna true ou false
-//     comparingField: elemento que será passado como segundo parâmetro da função compFunc
-//     destroyElement: função que destrói um elemento da lista
-void StList_ExecAndDestroy(StList staticList, void f(void*, void*), void *parameter, 
-                           bool compFunc(void*, void*), void *comparingField, void destroyElement(void*));
+//     pos: posição do elemento
+//     element: elemento a ser adicionado
+bool StList_AddAfter(StList staticListVoid, int pos, void *element);
+// Adiciona um elemento a uma lista estática antes de uma posição fornecida de um elemento
+//     staticList: ponteiro para a lista estática
+//     pos: posição do elemento
+//     element: elemento a ser adicionado
+bool StList_AddBefore(StList staticListVoid, int pos, void *element);
 // Remove o primeiro elemento em que a função compFunc retornar true
 //     staticList: ponteiro para a lista estática
 //     compFunc: função que aceita um elemento da lista, um parametro e retorna true ou false
@@ -59,6 +61,24 @@ bool StList_IsFull(StList staticList);
 //     staticList: ponteiro para a lista estática
 // Retorno: NULL se a lista estiver vazia, um elemento caso contrário
 void *StList_GetFirst(StList staticList);
+// Seleciona a posição do primeiro elemento da lista
+//     staticList: ponteiro para a lista estática
+// Retorno: -1 se a lista estiver vazia, uma posição caso contrário
+int StList_GetFirstPos(StList staticList);
+// Seleciona a posição do próximo elemento da posição fornecida
+//     staticList: ponteiro para a lista estática
+//     pos: posição (fornecida pela própria lista)
+// Retorno: -1 se a posição for válida, uma posição caso contrário
+int StList_GetNextPos(StList staticList, int pos);
+// Seleciona a posição do último elemento da lista
+//     staticList: ponteiro para a lista estática
+// Retorno: -1 se a lista estiver vazia, uma posição caso contrário
+int StList_GetLastPos(StList staticList);
+// Seleciona a posição do elemento anterior à posição fornecida
+//     staticList: ponteiro para a lista estática
+//     pos: posição (fornecida pela própria lista)
+// Retorno: -1 se a posição for válida, uma posição caso contrário
+int StList_GetPreviousPos(StList staticList, int pos);
 // Seleciona o primeiro elemento em que a função compFunc retornar true
 //     staticList: ponteiro para a lista estática
 //     compFunc: função que aceita um elemento da lista, um parametro e retorna true ou false

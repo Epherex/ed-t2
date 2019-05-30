@@ -5,7 +5,7 @@ double euclideanDistance(double x1, double y1, double x2, double y2) {
 }
 
 double manhattanDistance(double x1, double y1, double x2, double y2) {
-    return abs(x1 - x2) + abs(y1 - y2);
+    return fabs(x1 - x2) + fabs(y1 - y2);
 }
 
 double clamp(double value, double a, double b) {

@@ -9,8 +9,7 @@
 #include "modules/sig/svg.h"
 #include "modules/sig/geometry.h"
 #include "query.h"
-
-#define DEFAULT_MAXIMUM 1000
+#include "lists.h"
 
 void processAll(FILE *entryFile, FILE *outputSVGFile, FILE *outputQryFile, FILE *queryFile, 
                 FILE *txtFile, char outputDir[], char svgFileName[]);

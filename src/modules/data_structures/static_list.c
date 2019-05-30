@@ -1,7 +1,5 @@
 #include "static_list.h"
 
-#define NULLC -1
-
 typedef struct node_t {
     void *val;
     int previous;
@@ -107,21 +105,45 @@ bool StList_Add(StList staticListVoid, void *element) {
         int last = list->last;
         list->nodes[last].next = freeIndex;
         list->nodes[freeIndex].previous = last;
-        list->last = freeIndex;
     }
     list->last = freeIndex;
     return true;
 }
 
-void StList_ExecAndDestroy(StList staticListVoid, void f(void*, void*), void *parameter, bool compFunc(void*, void*), void *comparingField, void destroyElement(void*)) {
+bool StList_AddAfter(StList staticListVoid, int pos, void *element) {
     StListPtr list = (StListPtr) staticListVoid;
-    for(int i = list->first; i != NULLC; i = list->nodes[i].next) {
-        if(compFunc(list->nodes[i].val, comparingField)) {
-            f(list->nodes[i].val, parameter);
-            _removeElement(list, i);
-            destroyElement(list->nodes[i].val);
-        }
-    }
+    if(StList_IsFull(staticListVoid))
+        return false;
+
+    int freeIndex = _freeStackPop(list);
+    list->nodes[freeIndex].next = list->nodes[pos].next;
+    list->nodes[freeIndex].val = element;
+    list->nodes[freeIndex].previous = pos;
+    if(list->nodes[freeIndex].next == NULLC)
+        list->last = freeIndex;
+    else
+        list->nodes[list->nodes[pos].next].previous = freeIndex;
+    list->nodes[pos].next = freeIndex;
+        
+    return true;
+}
+
+bool StList_AddBefore(StList staticListVoid, int pos, void *element) {
+    StListPtr list = (StListPtr) staticListVoid;
+    if(StList_IsFull(staticListVoid))
+        return false;
+
+    int freeIndex = _freeStackPop(list);
+    list->nodes[freeIndex].next = pos;
+    list->nodes[freeIndex].val = element;
+    list->nodes[freeIndex].previous = list->nodes[pos].previous;
+    if(list->nodes[freeIndex].previous == NULLC)
+        list->first = freeIndex;
+    else
+        list->nodes[list->nodes[pos].previous].next = freeIndex;
+    list->nodes[pos].previous = freeIndex;
+        
+    return true;
 }
 
 void *StList_Remove(StList staticListVoid, bool compFunc(void*, void*), void *comparingField) {
@@ -175,6 +197,40 @@ void *StList_GetFirst(StList staticListVoid) {
         return NULL;
     else
         return list->nodes[list->first].val;
+}
+
+int StList_GetFirstPos(StList staticListVoid) {
+    StListPtr list = (StListPtr) staticListVoid;
+    if(StList_IsEmpty(list))
+        return NULLC;
+    else
+        return list->first;
+}
+
+int StList_GetNextPos(StList staticListVoid, int pos) {
+    StListPtr list = (StListPtr) staticListVoid;
+    if(pos >= 0 && pos < list->size) {
+        return list->nodes[pos].next;
+    } else {
+        return NULLC;
+    }
+}
+
+int StList_GetLastPos(StList staticListVoid) {
+    StListPtr list = (StListPtr) staticListVoid;
+    if(StList_IsEmpty(list))
+        return NULLC;
+    else
+        return list->last;
+}
+
+int StList_GetPreviousPos(StList staticListVoid, int pos) {
+    StListPtr list = (StListPtr) staticListVoid;
+    if(pos >= 0 && pos < list->size) {
+        return list->nodes[pos].previous;
+    } else {
+        return NULLC;
+    }
 }
 
 void *StList_Find(StList staticListVoid, bool compFunc(void*, void*), void *comparingField) {

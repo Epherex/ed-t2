@@ -14,9 +14,9 @@
 #define POINT_RADIUS 2.0
 #define HYDRANT_RADIUS 5.0
 #define POLY_OPACITY 0.6
-#define HIGHLIGHT_CSTROKE "chocolate"
+#define HIGHLIGHT_CSTROKE "gold"
 #define HIGHLIGHT_WSTROKE "2"
-#define HIGHLIGHT_CFILL "gold"
+#define HIGHLIGHT_CFILL "yellow"
 
 void putSVGStart(FILE *file);
 

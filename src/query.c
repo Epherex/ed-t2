@@ -80,7 +80,7 @@ void putBlockInfo(void *block, void *fileVoid) {
 void changeBlockColor(void *block, void *infosVoid) {
     InfosCbq *infos = (InfosCbq *) infosVoid;
     if(blockInDistanceL2(block, (void *) infos->dInfos)) {
-        fprintf(infos->txtFile, "%s ", Block_GetCep(block));
+        fprintf(infos->txtFile, "\n\t- %s", Block_GetCep(block));
         Block_SetCStroke(block, infos->cStrk);
     }
 }
@@ -113,22 +113,17 @@ void translateEquip(void *equip, void *infosVoid) {
     }
 }
 
-bool Query_Dq(FILE *txtFile, StList blockList, StList hydList, StList cTowerList, StList tLightList, char *buffer) {
-    char metric[8], id[16];
-    double dist;
-    sscanf(buffer + 3, "%7s %15s %lf", metric, id, &dist);
-    
-    Equip e = StList_Find(hydList, compareEquipToId, id);
+bool Query_Dq(FILE *txtFile, char metric[], char id[], double dist) {
+    Equip e = StList_Find(getHydList(), compareEquipToId, id);
     if(e == NULL)
-        e = StList_Find(cTowerList, compareEquipToId, id);
+        e = StList_Find(getCTowerList(), compareEquipToId, id);
     if(e == NULL)
-        e = StList_Find(tLightList, compareEquipToId, id);
+        e = StList_Find(getTLightList(), compareEquipToId, id);
     if(e == NULL) {
         printf("Erro: Elemento não encontrado: %s!\n", id);
         return true;
     }
 
-    fputs(buffer, txtFile);
     fprintf(txtFile, "Equipamento ID: %s\n", Equip_GetID(e));
 
     bool (*_blockInDistance)(void *, void *);
@@ -147,10 +142,10 @@ bool Query_Dq(FILE *txtFile, StList blockList, StList hydList, StList cTowerList
 
     int p;
     double dInfos[3] = {Equip_GetX(e), Equip_GetY(e), dist};
-    while(p = StList_FindPos(blockList, _blockInDistance, (void *) dInfos), p != -1) {
-        Block b = StList_Get(blockList, p);
-        fprintf(txtFile, "%s ", Block_GetCep(b));
-        StList_RemoveAt(blockList, p);
+    while(p = StList_FindPos(getBlockList(), _blockInDistance, (void *) dInfos), p != -1) {
+        Block b = StList_Get(getBlockList(), p);
+        fprintf(txtFile, "\n\t- %s", Block_GetCep(b));
+        StList_RemoveAt(getBlockList(), p);
         Block_Destroy(b);
     }
 
@@ -158,54 +153,49 @@ bool Query_Dq(FILE *txtFile, StList blockList, StList hydList, StList cTowerList
     return true;
 }
 
-bool Query_Del(FILE *txtFile, StList blockList, StList hydList, StList cTowerList, StList tLightList, char *buffer) {
-    char id[16];
-    sscanf(buffer + 4, "%15s", id);
-
-    fputs(buffer, txtFile);
-
-    int p = StList_FindPos(blockList, compareBlockToCep, id);
+bool Query_Del(FILE *txtFile, char id[]) {
+    int p = StList_FindPos(getBlockList(), compareBlockToCep, id);
     if(p != -1) {
-        Block b = StList_Get(blockList, p);
+        Block b = StList_Get(getBlockList(), p);
         fprintf(txtFile, "Informações da quadra removida:\n"
                             "CEP: %s\nPos: (%.2lf, %.2lf)\n"
                             "Largura: %.2lf\nAltura: %.2lf\n\n",
                             Block_GetCep(b), Block_GetX(b), Block_GetY(b), 
                             Block_GetW(b), Block_GetH(b));
-        StList_RemoveAt(blockList, p);
+        StList_RemoveAt(getBlockList(), p);
         Block_Destroy(b);
         return true;
     }
 
-    p = StList_FindPos(hydList, compareEquipToId, id);
+    p = StList_FindPos(getHydList(), compareEquipToId, id);
     if(p != -1) {
-        Equip e = StList_Get(hydList, p);
+        Equip e = StList_Get(getHydList(), p);
         fprintf(txtFile, "Informações do hidrante removido:\n"
                             "ID: %s\nPos: (%.2lf, %.2lf)\n\n",
                             Equip_GetID(e), Equip_GetX(e), Equip_GetY(e));
-        StList_RemoveAt(hydList, p);
+        StList_RemoveAt(getHydList(), p);
         Equip_Destroy(e);
         return true;
     }
 
-    p = StList_FindPos(cTowerList, compareEquipToId, id);
+    p = StList_FindPos(getCTowerList(), compareEquipToId, id);
     if(p != -1) {
-        Equip e = StList_Get(cTowerList, p);
+        Equip e = StList_Get(getCTowerList(), p);
         fprintf(txtFile, "Informações da rádio-base removida:\n"
                             "ID: %s\nPos: (%.2lf, %.2lf)\n\n",
                             Equip_GetID(e), Equip_GetX(e), Equip_GetY(e));
-        StList_RemoveAt(cTowerList, p);
+        StList_RemoveAt(getCTowerList(), p);
         Equip_Destroy(e);
         return true;
     }
 
-    p = StList_FindPos(tLightList, compareEquipToId, id);
+    p = StList_FindPos(getTLightList(), compareEquipToId, id);
     if(p != -1) {
-        Equip e = StList_Get(tLightList, p);
+        Equip e = StList_Get(getTLightList(), p);
         fprintf(txtFile, "Informações do semáforo removido:\n"
                             "ID: %s\nPos: (%.2lf, %.2lf)\n\n",
                             Equip_GetID(e), Equip_GetX(e), Equip_GetY(e));
-        StList_RemoveAt(tLightList, p);
+        StList_RemoveAt(getTLightList(), p);
         Equip_Destroy(e);
         return true;
     }
@@ -215,45 +205,35 @@ bool Query_Del(FILE *txtFile, StList blockList, StList hydList, StList cTowerLis
     return true;
 }
 
-bool Query_Cbq(FILE *txtFile, StList blockList, char *buffer) {
-    double x, y, r;
-    char cStrk[24];
-    sscanf(buffer + 4, "%lf %lf %lf %23s", &x, &y, &r, cStrk);
-
-    fputs(buffer, txtFile);
+bool Query_Cbq(FILE *txtFile, double x, double y, double r, char cStrk[]) {
     fprintf(txtFile, "Quadras que tiveram as bordas alteradas: ");
 
     InfosCbq infos = {{x, y, r}, cStrk, txtFile};
-    StList_Execute(blockList, changeBlockColor, &infos);
+    StList_Execute(getBlockList(), changeBlockColor, &infos);
 
     fprintf(txtFile, "\n\n");
     return true;
 }
 
-bool Query_Crd(FILE *txtFile, StList blockList, StList hydList, StList cTowerList, StList tLightList, char *buffer) {
-    char id[16];
-    sscanf(buffer + 5, "%15s", id);
-
-    fputs(buffer, txtFile);
-
+bool Query_Crd(FILE *txtFile, char id[]) {
     char eqType[24] = "";
     double x, y;
 
     Equip e;
     Block b;
-    if(b = StList_Find(blockList, compareBlockToCep, id), b != NULL) {
+    if(b = StList_Find(getBlockList(), compareBlockToCep, id), b != NULL) {
         strcpy(eqType, "Quadra");
         x = Block_GetX(b);
         y = Block_GetY(b);
-    } else if(e = StList_Find(hydList, compareEquipToId, id), e != NULL) {
+    } else if(e = StList_Find(getHydList(), compareEquipToId, id), e != NULL) {
         strcpy(eqType, "Hidrante");
         x = Equip_GetX(e);
         y = Equip_GetY(e);
-    } else if(e = StList_Find(cTowerList, compareEquipToId, id), e != NULL) {
+    } else if(e = StList_Find(getCTowerList(), compareEquipToId, id), e != NULL) {
         strcpy(eqType, "Rádio-base");
         x = Equip_GetX(e);
         y = Equip_GetY(e);
-    } else if(e = StList_Find(tLightList, compareEquipToId, id), e != NULL) {
+    } else if(e = StList_Find(getTLightList(), compareEquipToId, id), e != NULL) {
         strcpy(eqType, "Semáforo");
         x = Equip_GetX(e);
         y = Equip_GetY(e);
@@ -270,20 +250,23 @@ bool Query_Crd(FILE *txtFile, StList blockList, StList hydList, StList cTowerLis
     return true;
 }
 
-bool Query_Trns(FILE *txtFile, StList blockList, StList hydList, StList cTowerList, StList tLightList, char *buffer) {
+bool Query_Trns(FILE *txtFile, double x, double y, double w, double h, double dx, double dy) {
     InfosTrns infos;
-    sscanf(buffer + 5, "%lf %lf %lf %lf %lf %lf", 
-            &infos.x, &infos.y, &infos.w, &infos.h, &infos.dx, &infos.dy);
     
+    infos.x = x;
+    infos.y = y;
+    infos.w = w;
+    infos.h = h;
+    infos.dx = dx;
+    infos.dy = dy;
     infos.txtFile = txtFile;
 
-    fputs(buffer, txtFile);
     fprintf(txtFile, "Equipamentos movidos:");
     
-    StList_Execute(blockList,  translateBlock, (void *) &infos);
-    StList_Execute(hydList,    translateEquip, (void *) &infos);
-    StList_Execute(cTowerList, translateEquip, (void *) &infos); 
-    StList_Execute(tLightList, translateEquip, (void *) &infos);
+    StList_Execute(getBlockList(),  translateBlock, (void *) &infos);
+    StList_Execute(getHydList(),    translateEquip, (void *) &infos);
+    StList_Execute(getCTowerList(), translateEquip, (void *) &infos); 
+    StList_Execute(getTLightList(), translateEquip, (void *) &infos);
     
     fprintf(txtFile, "\n\n");
 

@@ -9,15 +9,16 @@
 #include "modules/sig/geometry.h"
 #include "modules/sig/object.h"
 #include "modules/sig/svg.h"
+#include "lists.h"
 
-bool Query_Dq(FILE *txtFile, StList blockList, StList hydList, StList cTowerList, StList tLightList, char *buffer);
+bool Query_Dq(FILE *txtFile, char metric[], char id[], double dist);
 
-bool Query_Del(FILE *txtFile, StList blockList, StList hydList, StList cTowerList, StList tLightList, char *buffer);
+bool Query_Del(FILE *txtFile, char id[]);
 
-bool Query_Cbq(FILE *txtFile, StList blockList, char *buffer);
+bool Query_Cbq(FILE *txtFile, double x, double y, double r, char cStrk[]);
 
-bool Query_Crd(FILE *txtFile, StList blockList, StList hydList, StList cTowerList, StList tLightList, char *buffer);
+bool Query_Crd(FILE *txtFile, char id[]);
 
-bool Query_Trns(FILE *txtFile, StList blockList, StList hydList, StList cTowerList, StList tLightList, char *buffer);
+bool Query_Trns(FILE *txtFile, double x, double y, double w, double h, double dx, double dy);
 
 #endif
