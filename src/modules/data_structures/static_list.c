@@ -56,6 +56,11 @@ void StList_Resize(StList staticListVoid, int size) {
     list->size = size;
 }
 
+int StList_GetSize(StList staticListVoid) {
+    StListPtr list = (StListPtr) staticListVoid;
+    return list->size;
+}
+
 void StList_Destroy(StList staticListVoid, void destroyElement(void*)) {
     StListPtr list = (StListPtr) staticListVoid;
     for(int i = list->first; i != NULLC; i = list->nodes[i].next) {

@@ -16,6 +16,10 @@ StList StList_Create(int size);
 //    staticList: ponteiro para a lista estática
 //    size: novo tamanho
 void StList_Resize(StList staticList, int size);
+// Obtém tamanho da lista
+//    staticList: ponteiro para a lista estática
+// Retorno: tamanho da lista
+int StList_GetSize(StList staticList);
 // Destrói uma lista estática
 //     staticList: ponteiro para a lista estática
 //     destroyElement: função que destrói um elemento da lista
